@@ -30,6 +30,8 @@ namespace Princeton
 #include <PrincetonInterface.h>
 %End
   public:
+    enum TemperatureStatus {Temp_Fault,Temp_Locked,Temp_Unlocked};
+    
     Interface(const std::string& = "");
     virtual ~Interface();
 
@@ -42,5 +44,10 @@ namespace Princeton
     virtual void 	getStatus(StatusType& status /Out/);
     virtual int 	getNbHwAcquiredFrames();
 
+    float getSensorTemperature() const;
+    Interface::TemperatureStatus getSensorTemperatureStatus() const;
+
+    float getSensorTemperatureSetpoint() const;
+    void setSensorTemperatureSetpoint(float temp);
   };
 };

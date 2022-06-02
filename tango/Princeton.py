@@ -56,6 +56,10 @@ class Princeton(PyTango.Device_4Impl):
     def __init__(self,*args) :
         PyTango.Device_4Impl.__init__(self,*args)
 
+        self.__SensorTemperatureStatus = {"FAULT" : PrincetonAcq.Interface.Temp_Fault,
+                                          "LOCKED": PrincetonAcq.Interface.Temp_Locked,
+                                          "UNLOCKED": PrincetonAcq.Interface.Temp_Unlocked,
+                                          }
         self.__Attribute2FunctionBase = {
         }
         
@@ -117,6 +121,33 @@ class PrincetonClass(PyTango.DeviceClass):
         }
 
     attr_list = {
+        'sensor_temperature_status':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ],
+         {
+             'unit': 'N/A',
+             'format': '',
+             'description': 'get cooling temperature status',
+         }],
+        'sensor_temperature':
+        [[PyTango.DevDouble,
+          PyTango.SCALAR,
+          PyTango.READ],
+         {
+             'unit': 'N/A',
+             'format': '',
+             'description': 'current ccd temperature',
+         }],
+        'sensor_temperature_setpoint':
+        [[PyTango.DevDouble,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'unit': 'N/A',
+             'format': '',
+             'description': 'regulation temperature setpoint',
+         }],
     }
 
     def __init__(self,name) :

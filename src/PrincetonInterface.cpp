@@ -355,6 +355,53 @@ void Interface::newFrameReady(const PicamAvailableData* available,
   m_cond.broadcast();
 }
 
+float Interface::getSensorTemperature() const
+{
+  piflt sensor_temp;
+  CHECK_PICAM(Picam_GetParameterFloatingPointValue(m_cam,
+						   PicamParameter_SensorTemperatureReading,
+						   &sensor_temp));
+  return sensor_temp;
+}
+
+Interface::TemperatureStatus Interface::getSensorTemperatureStatus() const
+{
+  piint status;
+  CHECK_PICAM(Picam_GetParameterIntegerValue(m_cam,
+					     PicamParameter_SensorTemperatureStatus,
+					     &status));
+  Interface::TemperatureStatus temp_status;
+  switch(status)
+    {
+    case PicamSensorTemperatureStatus_Locked:
+      temp_status = Interface::TemperatureStatus::Temp_Locked;break;
+    case PicamSensorTemperatureStatus_Unlocked:
+      temp_status = Interface::TemperatureStatus::Temp_Unlocked;break;
+    case PicamSensorTemperatureStatus_Faulted:
+    default:
+      temp_status = Interface::TemperatureStatus::Temp_Fault;break;
+    }
+  return temp_status;
+}
+
+float Interface::getSensorTemperatureSetpoint() const
+{
+  piflt setpoint_temp;
+  CHECK_PICAM(Picam_GetParameterFloatingPointValue(m_cam,
+						   PicamParameter_SensorTemperatureSetPoint,
+						   &setpoint_temp));
+  return setpoint_temp;
+}
+
+void Interface::setSensorTemperatureSetpoint(float setpoint)
+{
+  piflt setpoint_temp = setpoint;
+  CHECK_PICAM(Picam_SetParameterFloatingPointValue(m_cam,
+						   PicamParameter_SensorTemperatureSetPoint,
+						   setpoint_temp));
+}
+
+
 void Interface::_freePixelBuffer()
 {
   if(m_pixel_stream.memory)

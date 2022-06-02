@@ -58,7 +58,8 @@ namespace lima
     
     public:
       enum Status {Ready, Running, Fault};
-
+      enum TemperatureStatus {Temp_Fault,Temp_Locked,Temp_Unlocked};
+      
       Interface(const std::string& camera_serial = "");
       virtual ~Interface();
       //- From HwInterface
@@ -73,6 +74,13 @@ namespace lima
 
       void newFrameReady(const PicamAvailableData* available,
 			 const PicamAcquisitionStatus* status);
+      //Temperature management
+      float getSensorTemperature() const; ///< current sensor temperature
+      void getSensorTemperatureStatus(TemperatureStatus&) const; ///< get regulation status
+
+      // Get/Set temperature setpoint regulation
+      float getSensorTemperatureSetpoint() const;
+      void setSensorTemperatureSetpoint(float temp);
     private:
       void _freePixelBuffer();
 
