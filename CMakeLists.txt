@@ -62,21 +62,38 @@ include(project_version)
 
 find_package(Picam REQUIRED)
 
+# Enable python binding code compilation using sip generator
+if (CAMERA_MASTER_PROJECT)
+  option(LIMA_ENABLE_PYTHON "compile python binding code?" OFF)
+  option(LIMA_ENABLE_PYTANGO_SERVER "install python tango server?" OFF)
+
+  if (LIMA_ENABLE_PYTHON)
+    limatools_find_python_and_sip()
+  endif()
+endif()
+
 if(UNIX)
-	  set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--add-needed")
+  set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--add-needed")
 endif()
 
 #SOURCEs
 file(GLOB_RECURSE PRINCETON_INCS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 file(GLOB_RECURSE PRINCETON_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+
 # Library definition
 add_library(princeton SHARED
-  ${PRINCETON_SRC}
-  ${PRINCETON_INCS})
+  src/PrincetonBinCtrlObj.cpp
+  src/PrincetonDetInfoCtrlObj.cpp
+  src/PrincetonException.cpp
+  src/PrincetonInterface.cpp
+  src/PrincetonRoiCtrlObj.cpp
+  src/PrincetonShutterCtrlObj.cpp
+  src/PrincetonSyncCtrlObj.cpp
+  ${PRINCETON_INCS}
+)
 
 # Generate export macros
 generate_export_header(princeton)
-
 
 #INCLUDEs
 # Set version and output name
@@ -86,20 +103,15 @@ set_target_properties(princeton PROPERTIES
   SOVERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}")
 
 # Add dependencies
-#target_include_directories(princeton PUBLIC "include")
 target_include_directories(princeton PUBLIC ${PICAM_INCLUDE_DIRS})
-#target_include_directories(princeton PUBLIC  "/opt/PrincetonInstruments/picam/includes")
 target_include_directories(princeton
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"           # For export header
     PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-    )
+)
 
 target_link_libraries(princeton PUBLIC ${PICAM_LIBRARIES})
 target_link_libraries(princeton PUBLIC limacore)
-
-
-install(TARGETS princeton LIBRARY DESTINATION lib)
 
 if(WIN32)
   target_compile_definitions(princeton
@@ -109,8 +121,46 @@ if(WIN32)
   set_target_properties(princeton PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
 endif()
 
+# Binding code for python
 if(LIMA_ENABLE_PYTHON)
-    limatools_run_sip_for_camera(princeton)
+  limatools_run_sip_for_camera(princeton)
+endif()
+
+# Generate and install package config file and version
+if(CAMERA_MASTER_PROJECT)
+  set (PROJECT_LIBRARIES princeton)
+  set(SIP_INSTALL_DIR ${CMAKE_INSTALL_DATADIR}/sip/lima)
+  set(CMAKE_INSTALL_DIR ${CMAKE_INSTALL_DATADIR}/cmake/lima)
+  include(package_config)
+endif()
+
+## Installation
+
+install(
+  TARGETS princeton
+  EXPORT "${TARGETS_EXPORT_NAME}"
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}   # import library
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}   # .so files are libraries
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}   # .dll files are binaries
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}  # this does not actually install anything (but used by downstream projects)
+)
+
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+  COMPONENT devel
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/project_version.h
+    ${PROJECT_BINARY_DIR}/princeton_export.h
+  COMPONENT devel
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+if(LIMA_ENABLE_PYTHON)
     install(FILES python/__init__.py DESTINATION "${PYTHON_SITE_PACKAGES_DIR}/Lima/Princeton")
     if (LIMA_ENABLE_PYTANGO_SERVER)
       add_subdirectory(tango)
