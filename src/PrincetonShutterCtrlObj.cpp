@@ -123,7 +123,7 @@ void ShutterCtrlObj::getOpenTime(double& shut_open_time) const
 						       PicamParameter_ShutterOpeningDelay,
 						       &raw_shutter_open_time));
     }
-  catch(Exception)
+  catch(lima::Exception)
     {
       raw_shutter_open_time=0;
     }
@@ -158,7 +158,7 @@ void ShutterCtrlObj::getCloseTime(double& shut_close_time) const
 						       PicamParameter_ShutterOpeningDelay,
 						       &raw_shutter_close_time));
     }
-  catch(Exception)
+  catch(lima::Exception)
     {
       raw_shutter_close_time = 0;
     }
